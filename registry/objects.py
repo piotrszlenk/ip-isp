@@ -1,6 +1,8 @@
+import ipaddress
+
 class IP:
   def __init__(self, addr):
-    self.addr = addr
+    self.addr = ipaddress.ip_address(addr)
     self.asn = None
     self.cidr = None
 
@@ -12,10 +14,11 @@ class ASN:
     self.cc = cc
 
   def add_cidr(self, cidr):
-    if cidr.cidr_addr not in self.cidrs:
-      self.cidrs[cidr.cidr_addr] = cidr
+    if str(cidr.addr) not in self.cidrs:
+      self.cidrs[str(cidr.addr)] = cidr
+    return self.cidrs[str(cidr.addr)]
 
 class CIDR:
-  def __init__(self, asn, cidr_addr):
-    self.cidr_addr = cidr_addr
+  def __init__(self, asn, addr):
+    self.addr = ipaddress.ip_network(addr)
     self.asn = asn

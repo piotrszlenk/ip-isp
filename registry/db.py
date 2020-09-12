@@ -1,5 +1,6 @@
 import registry.objects
 import pprint
+import ipaddress
 
 class DB:
   def __init__(self):
@@ -9,14 +10,15 @@ class DB:
   
   def add_ip(self, addr):
     if addr not in self.ip_dict:
-      ip = registry.objects.IP(addr)
-      self.ip_dict[addr] = ip
-      return ip
+      self.ip_dict[addr] = registry.objects.IP(addr)
     return self.ip_dict[addr]
 
+  def del_ip(self, addr):
+    self.ip_dict.pop(addr, None)
+
   def update_ip(self, ip, asn, cidr):
-    if ip.addr in self.ip_dict:
-      ip = self.ip_dict[ip.addr]
+    if str(ip.addr) in self.ip_dict:
+      ip = self.ip_dict[str(ip.addr)]
       if not(ip.asn or ip.cidr):
         ip.asn = asn
         ip.cidr = cidr
@@ -24,7 +26,7 @@ class DB:
       else:
         return ip
     else:
-      raise Exception("IP %d does not exist in IP db, so cannot update it.", ip.addr)    
+      raise Exception("IP %d does not exist in IP db, so cannot update it.", str(ip.addr))    
 
   def add_asn(self, num, desc, cc):
     if num not in self.asn_dict:
@@ -47,4 +49,11 @@ class DB:
 
   def db_dump(self):
     for ip in self.ip_dict:
-      pprint.pprint(self.ip_dict[ip].addr+";"+self.ip_dict[ip].asn.num+";"+self.ip_dict[ip].asn.desc)
+      pprint.pprint(str(self.ip_dict[ip].addr)+";"+str(self.ip_dict[ip].asn.num)+";"+str(self.ip_dict[ip].asn.desc)+";")
+
+  def find_cidr_match(self, addr):
+    # improve to find the best match, not the first match
+    for cidr_addr in self.cidr_dict.keys():
+      if ipaddress.ip_address(addr) in ipaddress.ip_network(cidr_addr):
+        return self.cidr_dict[cidr_addr]
+    return None
