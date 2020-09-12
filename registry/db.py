@@ -1,4 +1,4 @@
-import objects
+import registry.objects
 import pprint
 
 class DB:
@@ -9,7 +9,7 @@ class DB:
   
   def add_ip(self, addr):
     if addr not in self.ip_dict:
-      ip = objects.IP(addr)
+      ip = registry.objects.IP(addr)
       self.ip_dict[addr] = ip
       return ip
     return self.ip_dict[addr]
@@ -28,7 +28,7 @@ class DB:
 
   def add_asn(self, num, desc, cc):
     if num not in self.asn_dict:
-      asn = objects.ASN(num, desc, cc)
+      asn = registry.objects.ASN(num, desc, cc)
       self.asn_dict[num] = asn
       return asn
     return self.asn_dict[num]
@@ -37,7 +37,7 @@ class DB:
     if asn_num in self.asn_dict:
       asn = self.asn_dict[asn_num]
       if cidr_net not in self.cidr_dict: 
-        cidr = objects.CIDR(asn, cidr_net)
+        cidr = registry.objects.CIDR(asn, cidr_net)
         asn.add_cidr(cidr)
         self.cidr_dict[cidr_net] = cidr
         return cidr

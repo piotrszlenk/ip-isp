@@ -1,5 +1,3 @@
-import ipaddresses
-
 class IP:
   def __init__(self, addr):
     self.addr = addr
