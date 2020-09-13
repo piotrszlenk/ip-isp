@@ -6,13 +6,17 @@ import pymongo
 class DB:
   def __init__(self):
     self.ip_dict = {}
-    self.asn_dict = {}
-    self.cidr_dict = {}
+    self.mongo_client = pymongo.MongoClient('mongodb://localhost:27017')
+    self.mongo_db = self.mongo_client['ip2asn']
 
-  def add_ip(self, addr):
-    if addr not in self.ip_dict:
-      self.ip_dict[addr] = registry.objects.IP(addr)
-    return self.ip_dict[addr]
+  def add_ip(self, ip):
+    ip = self.mongo_db.ips.find_one({'addr': ip.addr})
+    if not ip:
+      self.mongo_db.ips.insert_one({'addr': ip.addr})
+    return ip
+
+  def get_ip(self, addr):
+    return self.mongo.ips.find_one({'addr': addr})
 
   def del_ip(self, addr):
     self.ip_dict.pop(addr, None)

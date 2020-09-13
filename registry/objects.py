@@ -2,7 +2,7 @@ import ipaddress
 
 class IP:
   def __init__(self, addr):
-    self.addr = ipaddress.ip_address(addr)
+    self.addr = addr
     self.asn = None
     self.cidr = None
 
