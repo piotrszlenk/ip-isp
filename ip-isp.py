@@ -41,6 +41,8 @@ def main():
   for t in threads:
     t.join()
 
+  db.ip_dump()
+
 #  with open(args.output_file, 'w') as outfile:
 #    for ip in db.ip_dict:
 #      out_ip = str(db.ip_dict[ip].addr)
@@ -62,16 +64,18 @@ class IPLookupThread(threading.Thread):
       ip_addr = self.queue.get()
       try:
         r = ipwhois.IPWhois(ip_addr).lookup_rdap(asn_methods=['whois', 'http'])
-        ip = self.db.add_ip(registry.objects.IP(ip_addr))
+        ip_id = self.db.add_ip(registry.objects.IP(ip_addr))
+        if r['asn'] is not None and r['asn_cidr'] is not None and r['asn'] != "NA" and r['asn_cidr'] != "NA":
+          asn_id = self.db.add_asn(registry.objects.ASN(r['asn'], r['asn_description'], r['asn_country_code']))
+          #cidr = self.db.add_cidr(r['asn'], r['asn_cidr'])
+          self.db.update_ip(ip_id, asn_id)
+
       except ipwhois.exceptions.IPDefinedError as e:
         print('Cannot lookup following IP: {}. {}'.format(str(ip_addr), e))
         continue
       except ipwhois.exceptions.ASNRegistryError as e:
         print('Failed during lookup of IP: {}. {}'.format(str(ip_addr), e))
         continue        
-
-   #   print(self.db.get_ip(ip))
-
 
 
 #      cidr = self.db.find_cidr_match(str(ip))

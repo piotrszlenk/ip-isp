@@ -10,35 +10,42 @@ class DB:
     self.mongo_db = self.mongo_client['ip2asn']
 
   def add_ip(self, ip):
-    ip = self.mongo_db.ips.find_one({'addr': ip.addr})
-    if not ip:
-      self.mongo_db.ips.insert_one({'addr': ip.addr})
-    return ip
+    o = self.mongo_db.ips.find_one({'addr': ip.addr})
+    if not o:
+      o = self.mongo_db.ips.insert_one({'addr': ip.addr})
+      return o.inserted_id
+    return o['_id']
+
+  def add_asn(self, asn):
+    o = self.mongo_db.asns.find_one({'num': asn.num})
+    if not o:
+      o = self.mongo_db.asns.insert_one({'num': asn.num, 'desc': asn.desc, 'cc': asn.cc})
+      return o.inserted_id
+    return o['_id']
 
   def get_ip(self, addr):
-    return self.mongo.ips.find_one({'addr': addr})
+    return self.mongo_db.ips.find_one({'addr': addr})
 
   def del_ip(self, addr):
     self.ip_dict.pop(addr, None)
 
-  def update_ip(self, ip, asn, cidr):
-    if str(ip.addr) in self.ip_dict:
-      ip = self.ip_dict[str(ip.addr)]
-      if not(ip.asn or ip.cidr):
-        ip.asn = asn
-        ip.cidr = cidr
-        return ip
-      else:
-        return ip
-    else:
-      raise Exception("IP %d does not exist in IP db, so cannot update it.", str(ip.addr))    
+  def update_ip(self, ip_id, asn_id):
+#    pprint.pprint ("{}".format(ip_id))
+#    pprint.pprint ("{}".format(asn_id))
+    self.mongo_db.ips.find_one_and_update({"_id" : ip_id}, {'$set': {'asn_id': asn_id} })    
 
-  def add_asn(self, num, desc, cc):
-    if num not in self.asn_dict:
-      asn = registry.objects.ASN(num, desc, cc)
-      self.asn_dict[num] = asn
-      return asn
-    return self.asn_dict[num]
+#    if str(ip.addr) in self.ip_dict:
+#      ip = self.ip_dict[str(ip.addr)]
+#      if not(ip.asn or ip.cidr):
+#        ip.asn = asn
+#        ip.cidr = cidr
+#        return ip
+#      else:
+#        return ip
+#    else:
+#      raise Exception("IP %d does not exist in IP db, so cannot update it.", str(ip.addr))    
+
+
 
   def add_cidr(self, asn_num, cidr_net):
     if asn_num in self.asn_dict:
@@ -52,9 +59,9 @@ class DB:
     else:
       raise Exception("ASN %d does not exist in ASN db, so cannot add CIDR.", asn_num)
 
-  def db_dump(self):
-    for ip in self.ip_dict:
-      pprint.pprint(str(self.ip_dict[ip].addr)+";"+str(self.ip_dict[ip].asn.num)+";"+str(self.ip_dict[ip].asn.desc)+";")
+  def ip_dump(self):
+    for ip in self.mongo_db.ips.find():
+      print(ip)
 
   def find_cidr_match(self, addr):
     # improve to find the best match, not the first match
