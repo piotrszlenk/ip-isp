@@ -9,7 +9,6 @@ class IP:
 class ASN:
   def __init__(self, num, desc, cc):
     self.num = num
-    self.cidrs = {}
     self.desc = desc
     self.cc = cc
 
@@ -19,6 +18,6 @@ class ASN:
     return self.cidrs[str(cidr.addr)]
 
 class CIDR:
-  def __init__(self, asn, addr):
-    self.addr = ipaddress.ip_network(addr)
-    self.asn = asn
+  def __init__(self, addr):
+    self.addr = addr
+    self.asn = None

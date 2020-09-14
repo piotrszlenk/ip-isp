@@ -22,7 +22,7 @@ def main():
   ip_queue = queue.Queue()  
   terminate_event = threading.Event()
 
-  for i in range(5):
+  for i in range(4):
     t = IPLookupThread(db, ip_queue, terminate_event)
     threads.append(t)
     t.start()
@@ -42,6 +42,8 @@ def main():
     t.join()
 
   db.ip_dump()
+  db.asn_dump()
+  db.cidr_dump()
 
 #  with open(args.output_file, 'w') as outfile:
 #    for ip in db.ip_dict:
@@ -63,19 +65,24 @@ class IPLookupThread(threading.Thread):
     while not self.event.is_set() or not self.queue.empty():
       ip_addr = self.queue.get()
       try:
+        print("Thread {} is processing {}".format(threading.current_thread().ident,ip_addr))
         r = ipwhois.IPWhois(ip_addr).lookup_rdap(asn_methods=['whois', 'http'])
-        ip_id = self.db.add_ip(registry.objects.IP(ip_addr))
+        ip = self.db.add_ip(registry.objects.IP(ip_addr))
         if r['asn'] is not None and r['asn_cidr'] is not None and r['asn'] != "NA" and r['asn_cidr'] != "NA":
-          asn_id = self.db.add_asn(registry.objects.ASN(r['asn'], r['asn_description'], r['asn_country_code']))
-          #cidr = self.db.add_cidr(r['asn'], r['asn_cidr'])
-          self.db.update_ip(ip_id, asn_id)
-
+          asn = self.db.add_asn(registry.objects.ASN(r['asn'], r['asn_description'], r['asn_country_code']))
+          cidr = self.db.add_cidr(registry.objects.CIDR(r['asn_cidr']))
+          self.db.add_asn_to_cidr(cidr, asn)
+          self.db.add_asn_to_ip(ip, asn)
       except ipwhois.exceptions.IPDefinedError as e:
         print('Cannot lookup following IP: {}. {}'.format(str(ip_addr), e))
         continue
       except ipwhois.exceptions.ASNRegistryError as e:
         print('Failed during lookup of IP: {}. {}'.format(str(ip_addr), e))
         continue        
+      except ipwhois.exceptions.HTTPLookupError as e:
+        print('Failed during lookup of IP: {}. {}'.format(str(ip_addr), e))
+        continue        
+      self.queue.task_done()
 
 
 #      cidr = self.db.find_cidr_match(str(ip))
@@ -97,7 +104,7 @@ class IPLookupThread(threading.Thread):
 #        except ipwhois.exceptions.ASNRegistryError as e:
 #          print('Failed during lookup of IP: {}. {}'.format(str(ip), e))
 #          continue
-#      self.queue.task_done()
+#      
 
 if __name__ == "__main__":
   main()
