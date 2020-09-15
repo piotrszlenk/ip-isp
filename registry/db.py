@@ -1,13 +1,14 @@
 import registry.objects
 import pprint
 import ipaddress
+import pymongo
 
 class DB:
   def __init__(self):
     self.ip_dict = {}
     self.asn_dict = {}
     self.cidr_dict = {}
-  
+
   def add_ip(self, addr):
     if addr not in self.ip_dict:
       self.ip_dict[addr] = registry.objects.IP(addr)
