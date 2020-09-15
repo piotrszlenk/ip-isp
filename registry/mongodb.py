@@ -31,6 +31,12 @@ class DB:
   def add_asn_to_cidr(self, cidr, asn):
     return self.mongo_db.cidrs.find_one_and_update({'_id': cidr['_id']}, {'$set': {'asn_id': asn['_id']} }, upsert=True, return_document=ReturnDocument.AFTER)
 
+  def find_cidr_match(self, addr):
+    # improve to find the best match, not the first match
+    for cidr in self.mongo_db.cidrs.find():
+      if ipaddress.ip_address(addr) in ipaddress.ip_network(cidr['addr']):
+        return cidr
+    return None
 
 
 #    if str(ip.addr) in self.ip_dict:
@@ -71,9 +77,3 @@ class DB:
       print(cidr)
 
 
-  def find_cidr_match(self, addr):
-    # improve to find the best match, not the first match
-    for cidr_addr in self.cidr_dict.keys():
-      if ipaddress.ip_address(addr) in ipaddress.ip_network(cidr_addr):
-        return self.cidr_dict[cidr_addr]
-    return None
